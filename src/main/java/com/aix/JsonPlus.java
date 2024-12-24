@@ -28,15 +28,23 @@ public class JsonPlus {
 
     private static <T> T convertToType(Expression expression, Type type) {
         if (type instanceof ParameterizedType pt) {
-            return convertToRawType(expression,pt,pt.getRawType());
+            return convertToRawType(expression,pt.getRawType(),pt.getActualTypeArguments());
         }
-        return convertToRawType(expression,null,type);
+        return convertToRawType(expression,type,new Type[]{Object.class});
     }
 
-    private static <T> T convertToRawType(Expression expression, ParameterizedType type, Type rawType) {
+    private static <T> T convertToRawType(Expression expression, Type rawType, Type[] actualTypeArguments) {
         if (rawType instanceof Class<?> clazz) {
-            if(
-                clazz.isAssignableFrom(Object.class) ||
+            boolean isObjectType = clazz.isAssignableFrom(Object.class);
+            boolean isObjectToListType = isObjectType && expression instanceof ArrayExpression;
+            boolean isObjectToMapType = isObjectType && expression instanceof ObjectExpression;
+            boolean isObjectToBaseType = isObjectType && !(isObjectToListType || isObjectToMapType);
+            if(isObjectToListType) {
+                return handleListConversion(expression, actualTypeArguments[0]);
+            } else if(isObjectToMapType) {
+                return handleMapConversion(expression, actualTypeArguments[0]);
+            }else if(
+                isObjectToBaseType ||
                 clazz.isAssignableFrom(String.class) ||
                 clazz.isAssignableFrom(byte.class) ||
                 clazz.isAssignableFrom(Byte.class) ||
@@ -54,9 +62,9 @@ public class JsonPlus {
             ){
                 return handleBaseConversion(expression,clazz);
             } else if(clazz.isAssignableFrom(List.class)){
-                return handleListConversion(expression, type);
+                return handleListConversion(expression, actualTypeArguments[0]);
             } else if(clazz.isAssignableFrom(Map.class)){
-                return handleMapConversion(expression, type);
+                return handleMapConversion(expression, actualTypeArguments[1]);
             } else if(expression instanceof ObjectExpression objectExpression){
                 return handleClassObjectConversion(objectExpression, clazz);
             }
@@ -65,9 +73,8 @@ public class JsonPlus {
     }
 
     @SuppressWarnings("unchecked")
-    private static <T> T handleListConversion(Expression expression, ParameterizedType type) {
+    private static <T> T handleListConversion(Expression expression, Type childrenType) {
         if (expression instanceof ArrayExpression arrayExpression) {
-            Type childrenType = type.getActualTypeArguments()[0];
             return (T) arrayExpression.getMembers().stream()
                     .map(member -> convertToType(member, childrenType))
                     .collect(Collectors.toList());
@@ -76,11 +83,10 @@ public class JsonPlus {
     }
 
     @SuppressWarnings("unchecked")
-    private static <T> T handleMapConversion(Expression expression, ParameterizedType type) {
+    private static <T> T handleMapConversion(Expression expression, Type valueType) {
         if (expression instanceof ObjectExpression objectExpression) {
             Map<String, Object> data = new LinkedHashMap<>();
             for (Map.Entry<String, Expression> entry : objectExpression.getMembers().entrySet()) {
-                Type valueType = type.getActualTypeArguments()[1];
                 data.put(entry.getKey(), convertToType(entry.getValue(), valueType));
             }
             return (T) data;

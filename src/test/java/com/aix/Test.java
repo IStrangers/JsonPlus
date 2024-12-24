@@ -3,6 +3,7 @@ package com.aix;
 import com.aix.parser.TypeRef;
 
 import java.util.List;
+import java.util.Map;
 
 public class Test {
 
@@ -28,8 +29,10 @@ public class Test {
                }
            ]
         """;
-        List<Entity> value = JsonPlus.parse(json, new TypeRef<>() {});
-        System.out.println(value);
+        List<Map<String,Object>> value1 = JsonPlus.parse(json, new TypeRef<>() {});
+        List<Entity> value2 = JsonPlus.parse(json, new TypeRef<>() {});
+        System.out.println(value1);
+        System.out.println(value2);
     }
 
 }
