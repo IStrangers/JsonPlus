@@ -6,4 +6,9 @@ public class NumberExpression extends StringExpression {
         super(value);
     }
 
+    @Override
+    public String toJson(int deepLevel) {
+        return value;
+    }
+
 }

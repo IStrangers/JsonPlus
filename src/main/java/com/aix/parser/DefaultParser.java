@@ -2,10 +2,7 @@ package com.aix.parser;
 
 import com.aix.parser.ast.*;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class DefaultParser implements Parser {
 
@@ -213,7 +210,7 @@ public class DefaultParser implements Parser {
 
     public ObjectExpression parseObjectExpression() {
         expect(Token.LEFT_BRACE);
-        Map<String,Expression> members = new HashMap<>();
+        Map<String,Expression> members = new LinkedHashMap<>();
         while (getToken() != Token.RIGHT_BRACE) {
             StringExpression key = parseStringExpression();
             expect(Token.COLON);

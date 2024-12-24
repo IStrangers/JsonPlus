@@ -15,4 +15,9 @@ public class BoolExpression extends AbstractExpression {
         return value;
     }
 
+    @Override
+    public String toJson(int deepLevel) {
+        return value ? "true" : "false";
+    }
+
 }
