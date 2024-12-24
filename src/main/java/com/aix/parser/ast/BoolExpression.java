@@ -9,7 +9,7 @@ public class BoolExpression extends AbstractExpression {
         this.value = value;
     }
 
-    private boolean value;
+    private final boolean value;
 
     public boolean isValue() {
         return value;
