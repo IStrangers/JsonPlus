@@ -80,7 +80,7 @@ public class JsonPlus {
         if (expression instanceof ObjectExpression objectExpression) {
             Map<String, Object> data = new LinkedHashMap<>();
             for (Map.Entry<String, Expression> entry : objectExpression.getMembers().entrySet()) {
-                Type valueType = type.getActualTypeArguments()[1]; // Assuming K-V pair where V is the second argument
+                Type valueType = type.getActualTypeArguments()[1];
                 data.put(entry.getKey(), convertToType(entry.getValue(), valueType));
             }
             return (T) data;
