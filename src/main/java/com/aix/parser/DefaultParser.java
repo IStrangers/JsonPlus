@@ -11,7 +11,8 @@ public class DefaultParser implements Parser {
 
     private final String json;
     private int readIndex;
-    private TokenObject tokenObject;
+    private char readIndexChar;
+    private TokenObject tokenObject = new TokenObject(null," ");
 
     private final Map<Character, Token> tokenMap = Map.of(
     '[', Token.LEFT_BRACKET,
@@ -20,6 +21,12 @@ public class DefaultParser implements Parser {
     '}', Token.RIGHT_BRACE,
     ',', Token.COMMA,
     ':', Token.COLON
+    );
+
+    private final Map<String, Token> keywordMap = Map.of(
+    "true", Token.BOOLEAN,
+    "false", Token.BOOLEAN,
+    "null", Token.NULL
     );
 
     public DefaultParser(String json) {
@@ -43,13 +50,49 @@ public class DefaultParser implements Parser {
 
     public char readChar() {
         if (readIndex < json.length()) {
-            return json.charAt(readIndex++);
+            readIndexChar = json.charAt(readIndex++);
+        } else {
+            readIndex = -1;
         }
-        return (char) -1;
+        return readIndexChar;
+    }
+
+    public boolean isWhiteSpaceChr(char chr) {
+        return chr == ' ' || chr == '\t' || chr == '\r' || chr == '\n' || chr == '\f';
+    }
+
+    public void skipWhiteSpaceChar() {
+        while (isWhiteSpaceChr(readIndexChar)) {
+            readChar();
+        }
+    }
+
+    public boolean isIdentifierStart(char chr) {
+        return chr == '$' || chr == '_' || (chr >= 'A' && chr <= 'Z') || (chr >= 'a' && chr <= 'z');
+    }
+
+    public boolean isIdentifierPart(char chr) {
+        return isIdentifierStart(chr) || (chr >= '0' && chr <= '9');
+    }
+
+    private String scanIdentifier() {
+        int start = readIndex - 1;
+        while (readIndex < json.length() && isIdentifierPart(json.charAt(readIndex))) {
+            readIndex++;
+        }
+        return json.substring(start, readIndex);
     }
 
     public void nextToken() {
+        skipWhiteSpaceChar();
+
         char c = readChar();
+
+        if (isIdentifierStart(c)) {
+            String value = scanIdentifier();
+            tokenObject = new TokenObject(keywordMap.getOrDefault(value,Token.IDENTIFIER), value);
+            return;
+        }
 
         if (tokenMap.containsKey(c)) {
             Token token = tokenMap.get(c);
@@ -67,17 +110,13 @@ public class DefaultParser implements Parser {
             return;
         }
 
-        if (c == (char) -1) {
-            tokenObject = new TokenObject(null,null);
-            return;
-        }
-
-        throw new IllegalArgumentException("Unexpected character: " + c);
+        tokenObject = new TokenObject(null,String.valueOf(c));
     }
 
     public void expect(Token token) {
         expect(token,true);
     }
+
     public void expect(Token token, boolean throwError) {
         if (token != tokenObject.getToken()) {
             if (throwError) throw new IllegalArgumentException("Unexpected token: " + token);
