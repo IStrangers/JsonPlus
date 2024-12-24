@@ -4,7 +4,13 @@ public class Test {
 
     public static void main(String[] args) {
         Object value = JsonPlus.parse("""
-        [1,2.57,3,"wwqq1321","大概的",true,false,null]
+        {
+            "key1": 123,
+            "key2": "接待加我的",
+            "key3": true,
+            "key4": false,
+            "key5": null,
+        }
         """, null);
         System.out.println(value);
     }

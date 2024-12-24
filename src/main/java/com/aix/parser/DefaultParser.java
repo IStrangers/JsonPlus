@@ -52,7 +52,7 @@ public class DefaultParser implements Parser {
         if (readIndex < json.length()) {
             readIndexChar = json.charAt(readIndex++);
         } else {
-            readIndex = -1;
+            readIndexChar = (char) -1;
         }
         return readIndexChar;
     }
@@ -62,9 +62,9 @@ public class DefaultParser implements Parser {
     }
 
     public void skipWhiteSpaceChar() {
-        while (isWhiteSpaceChr(readIndexChar)) {
+        do {
             readChar();
-        }
+        } while (isWhiteSpaceChr(readIndexChar));
     }
 
     public boolean isIdentifierStart(char chr) {
@@ -86,31 +86,29 @@ public class DefaultParser implements Parser {
     public void nextToken() {
         skipWhiteSpaceChar();
 
-        char c = readChar();
-
-        if (isIdentifierStart(c)) {
+        if (isIdentifierStart(readIndexChar)) {
             String value = scanIdentifier();
             tokenObject = new TokenObject(keywordMap.getOrDefault(value,Token.IDENTIFIER), value);
             return;
         }
 
-        if (tokenMap.containsKey(c)) {
-            Token token = tokenMap.get(c);
+        if (tokenMap.containsKey(readIndexChar)) {
+            Token token = tokenMap.get(readIndexChar);
             tokenObject = new TokenObject(token, token.getValue());
             return;
         }
 
-        if ('"' == c) {
+        if ('"' == readIndexChar) {
             tokenObject = new TokenObject(Token.STRING, scanString());
             return;
         }
 
-        if (Character.isDigit(c)) {
+        if (Character.isDigit(readIndexChar)) {
             tokenObject = new TokenObject(Token.NUMBER, scanNumber());
             return;
         }
 
-        tokenObject = new TokenObject(null,String.valueOf(c));
+        tokenObject = new TokenObject(null,String.valueOf(readIndexChar));
     }
 
     public void expect(Token token) {
@@ -218,6 +216,7 @@ public class DefaultParser implements Parser {
         Map<String,Expression> members = new HashMap<>();
         while (getToken() != Token.RIGHT_BRACE) {
             StringExpression key = parseStringExpression();
+            expect(Token.COLON);
             Expression value = parseExpression();
             members.put(key.getValue(),value);
             expectOrSkip(Token.COMMA);
