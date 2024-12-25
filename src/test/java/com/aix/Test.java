@@ -1,6 +1,7 @@
 package com.aix;
 
 import com.aix.parser.TypeRef;
+import com.aix.parser.ast.Expression;
 
 import java.util.List;
 import java.util.Map;
@@ -29,8 +30,10 @@ public class Test {
                }
            ]
         """;
+        Expression expression = JsonPlus.parseToExpression(json);
         List<Map<String,Object>> value1 = JsonPlus.parse(json, new TypeRef<>() {});
         List<Entity> value2 = JsonPlus.parse(json, new TypeRef<>() {});
+        System.out.println(expression);
         System.out.println(value1);
         System.out.println(value2);
     }

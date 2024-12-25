@@ -16,12 +16,16 @@ import java.util.stream.Collectors;
 
 public class JsonPlus {
 
+    public static Expression parseToExpression(String json) {
+        Parser parser = new DefaultParser(json);
+        return parser.parse();
+    }
+
     public static <T> T parse(String json, TypeRef<T> typeRef) {
         if (json == null) return null;
         json = json.trim();
         if (!json.startsWith("{") && !json.startsWith("[")) return null;
-        Parser parser = new DefaultParser(json);
-        Expression expression = parser.parse();
+        Expression expression = parseToExpression(json);
         Type type = typeRef.getType();
         return convertToType(expression,type);
     }
