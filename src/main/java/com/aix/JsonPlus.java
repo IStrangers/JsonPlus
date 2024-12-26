@@ -56,6 +56,8 @@ public class JsonPlus {
             }else if(
                 isObjectToBaseType ||
                 clazz.isAssignableFrom(String.class) ||
+                clazz.isAssignableFrom(boolean.class) ||
+                clazz.isAssignableFrom(Boolean.class) ||
                 clazz.isAssignableFrom(byte.class) ||
                 clazz.isAssignableFrom(Byte.class) ||
                 clazz.isAssignableFrom(short.class) ||
