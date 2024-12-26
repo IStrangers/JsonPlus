@@ -9,6 +9,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -28,6 +29,11 @@ public class JsonPlus {
         Expression expression = parseToExpression(json);
         Type type = typeRef.getType();
         return convertToType(expression,type);
+    }
+
+    public static String toJson(Object obj) {
+        Expression expression = toExpression(obj);
+        return expression.toJson();
     }
 
     private static <T> T convertToType(Expression expression, Type type) {
@@ -146,6 +152,51 @@ public class JsonPlus {
             e.printStackTrace();
         }
         return null;
+    }
+
+    public static Expression toExpression(Object obj) {
+        if (obj == null) {
+            return NullExpression.CONST_NULL;
+        } else if (obj instanceof Boolean objBool) {
+            return objBool ? BoolExpression.CONST_TRUE : BoolExpression.CONST_FALSE;
+        } else if (obj instanceof List<?> objList) {
+            List<Expression> members = new ArrayList<>(objList.size());
+            for (Object o : objList) {
+                members.add(toExpression(o));
+            }
+            return new ArrayExpression(members);
+        } else if (obj instanceof Map<?,?> objMap) {
+            Map<String,Expression> members = new LinkedHashMap<>(objMap.size());
+            for (Map.Entry<?, ?> entry : objMap.entrySet()) {
+                members.put(entry.getKey().toString(), toExpression(entry.getValue()));
+            }
+            return new ObjectExpression(members);
+        } else if (obj instanceof String objString) {
+            return new StringExpression(objString);
+        } else if(
+            obj instanceof Byte ||
+            obj instanceof Short ||
+            obj instanceof Integer ||
+            obj instanceof Long ||
+            obj instanceof Float ||
+            obj instanceof Double ||
+            obj instanceof BigDecimal
+        ) {
+            return new NumberExpression(obj.toString());
+        } else {
+            Field[] declaredFields = obj.getClass().getDeclaredFields();
+            Map<String,Expression> members = new LinkedHashMap<>(declaredFields.length);
+            for (Field declaredField : declaredFields) {
+                declaredField.setAccessible(true);
+                try {
+                    Expression value = toExpression(declaredField.get(obj));
+                    members.put(declaredField.getName(),value);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+            return new ObjectExpression(members);
+        }
     }
 
 }
