@@ -3,8 +3,6 @@ package com.aix.parser;
 import com.aix.parser.ast.*;
 
 import java.util.*;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.Supplier;
 
 public class DefaultParser implements Parser {
 
@@ -102,8 +100,9 @@ public class DefaultParser implements Parser {
             return;
         }
 
-        if (Character.isDigit(readIndexChar)) {
-            tokenObject = new TokenObject(Token.NUMBER, scanNumber());
+        boolean isNegativeNumber = false;
+        if (Character.isDigit(readIndexChar) || (isNegativeNumber = '-' == readIndexChar && Character.isDigit(readChar()))) {
+            tokenObject = new TokenObject(Token.NUMBER, scanNumber(isNegativeNumber));
             return;
         }
 
@@ -175,24 +174,21 @@ public class DefaultParser implements Parser {
         return (char) codePoint;
     }
 
-    public String scanNumber() {
-        int start = readIndex - 1;
-        boolean isNegative = json.charAt(start) == '-';
+    public String scanNumber(boolean isNegativeNumber) {
+        int start = readIndex - (isNegativeNumber ? 2 : 1);
 
-        while (readIndex < json.length() &&
-            (
-                Character.isDigit(json.charAt(readIndex)) ||
-                json.charAt(readIndex) == '.' ||
-                json.charAt(readIndex) == 'e' ||
-                json.charAt(readIndex) == 'E' ||
-                (json.charAt(readIndex) == '+' || json.charAt(readIndex) == '-') &&
-                (json.charAt(readIndex - 1) == 'e' || json.charAt(readIndex - 1) == 'E')
-            )
+        while (
+            Character.isDigit(json.charAt(readIndex)) ||
+            json.charAt(readIndex) == '.' ||
+            json.charAt(readIndex) == 'e' ||
+            json.charAt(readIndex) == 'E' ||
+            (json.charAt(readIndex) == '+' || json.charAt(readIndex) == '-') &&
+            (json.charAt(readIndex - 1) == 'e' || json.charAt(readIndex - 1) == 'E')
         ) {
             readIndex++;
         }
-        String numberStr = json.substring(start, readIndex);
-        return isNegative ? '-' + numberStr : numberStr;
+
+        return json.substring(start, readIndex);
     }
 
     public boolean isLineTerminator(char chr) {
