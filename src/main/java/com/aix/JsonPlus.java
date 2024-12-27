@@ -1,5 +1,6 @@
 package com.aix;
 
+import com.aix.annotation.IgnoreField;
 import com.aix.parser.DefaultParser;
 import com.aix.parser.Parser;
 import com.aix.parser.TypeRef;
@@ -143,10 +144,10 @@ public class JsonPlus {
             Field[] declaredFields = clazz.getDeclaredFields();
             Map<String, Expression> members = objectExpression.getMembers();
             for (Field declaredField : declaredFields) {
-                Expression expression = members.get(declaredField.getName());
-                if (expression == null) continue;
-                Type type = declaredField.getGenericType();
                 declaredField.setAccessible(true);
+                Expression expression = members.get(declaredField.getName());
+                if (expression == null || declaredField.getDeclaredAnnotation(IgnoreField.class) != null) continue;
+                Type type = declaredField.getGenericType();
                 declaredField.set(instance, convertToType(expression, type));
             }
             return (T) instance;
@@ -190,6 +191,7 @@ public class JsonPlus {
             Map<String,Expression> members = new LinkedHashMap<>(declaredFields.length);
             for (Field declaredField : declaredFields) {
                 declaredField.setAccessible(true);
+                if(declaredField.getDeclaredAnnotation(IgnoreField.class) != null) continue;
                 try {
                     Expression value = toExpression(declaredField.get(obj));
                     members.put(declaredField.getName(),value);

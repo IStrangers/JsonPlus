@@ -1,5 +1,7 @@
 package com.aix;
 
+import com.aix.annotation.IgnoreField;
+
 import java.util.List;
 
 public class Entity {
@@ -7,6 +9,7 @@ public class Entity {
     private int id;
     private String key;
     private String value;
+    @IgnoreField
     private List<Entity> children;
 
     public int getId() {
