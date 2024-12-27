@@ -3,7 +3,6 @@ package com.aix.parser;
 public enum Token {
 
     COMMENT(""),
-    MULTI_COMMENT(""),
     IDENTIFIER(""),
     LEFT_BRACE("{"),
     RIGHT_BRACE("}"),

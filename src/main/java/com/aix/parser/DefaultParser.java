@@ -3,6 +3,8 @@ package com.aix.parser;
 import com.aix.parser.ast.*;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Supplier;
 
 public class DefaultParser implements Parser {
 
@@ -105,6 +107,15 @@ public class DefaultParser implements Parser {
             return;
         }
 
+        if ('/' == readIndexChar) {
+            readChar();
+            boolean isMultiComment = false;
+            if ('/' == readIndexChar || (isMultiComment = '*' == readIndexChar)) {
+                tokenObject = new TokenObject(Token.COMMENT, scanComment(isMultiComment));
+                return;
+            }
+        }
+
         tokenObject = new TokenObject(null,String.valueOf(readIndexChar));
     }
 
@@ -184,6 +195,22 @@ public class DefaultParser implements Parser {
         return isNegative ? '-' + numberStr : numberStr;
     }
 
+    public boolean isLineTerminator(char chr) {
+        return chr == '\n' || chr == '\r' || chr == '\u2028' || chr == '\u2029' || chr == (char) -1;
+    }
+
+    public boolean isNotLineTerminator(char chr) {
+        return !isLineTerminator(chr);
+    }
+
+    public String scanComment(boolean isMultiComment) {
+        int start = readIndex - 2;
+        while (isMultiComment ? !(readIndexChar == '*' && readChar() == '/') : isNotLineTerminator(readIndexChar)) {
+            readChar();
+        }
+        return json.substring(start, readIndex);
+    }
+
     public Expression parseExpression() {
         Token token = getToken();
         return switch (token) {
@@ -193,6 +220,10 @@ public class DefaultParser implements Parser {
             case NUMBER -> parseNumberExpression();
             case BOOLEAN -> parseBooleanExpression();
             case NULL -> parseNullExpression();
+            case COMMENT -> {
+                parseCommentExpression();
+                yield parseExpression();
+            }
             default -> throw new UnsupportedOperationException("Unsupported token: " + token);
         };
     }
@@ -212,7 +243,7 @@ public class DefaultParser implements Parser {
         expect(Token.LEFT_BRACE);
         Map<String,Expression> members = new LinkedHashMap<>();
         while (getToken() != Token.RIGHT_BRACE) {
-            StringExpression key = parseStringExpression();
+            StringExpression key = (StringExpression) parseExpression();
             expect(Token.COLON);
             Expression value = parseExpression();
             members.put(key.getValue(),value);
@@ -243,6 +274,12 @@ public class DefaultParser implements Parser {
     public NullExpression parseNullExpression() {
         expect(Token.NULL);
         return NullExpression.CONST_NULL;
+    }
+
+    public CommentExpression parseCommentExpression() {
+        CommentExpression commentExpression = new CommentExpression(getTokenValue());
+        expect(Token.COMMENT);
+        return commentExpression;
     }
 
 }
