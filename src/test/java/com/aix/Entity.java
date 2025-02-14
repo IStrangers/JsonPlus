@@ -1,6 +1,7 @@
 package com.aix;
 
 import com.aix.annotation.IgnoreField;
+import com.aix.annotation.JsonField;
 
 import java.util.List;
 
@@ -8,6 +9,7 @@ public class Entity {
 
     private int id;
     private String key;
+    @JsonField(name = "val")
     private String value;
     @IgnoreField
     private List<Entity> children;

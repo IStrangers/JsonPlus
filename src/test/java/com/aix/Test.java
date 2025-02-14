@@ -13,19 +13,19 @@ public class Test {
                {
                     "id": 1,
                     "key": "GZ",
-                    "value": "T_1001",
+                    "val": "T_1001",
                     "children": [
                         {
                             "id": 3,
                             "key": "GZ_THQ",
-                            "value": "T_1003",
+                            "val": "T_1003",
                         }
                     ]
                },
                {
                     "id": 2,
                     "key": "SZ",
-                    "value": "T_1002",
+                    "val": "T_1002",
                }
            ]
         """;

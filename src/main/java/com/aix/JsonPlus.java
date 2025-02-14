@@ -1,6 +1,7 @@
 package com.aix;
 
 import com.aix.annotation.IgnoreField;
+import com.aix.annotation.JsonField;
 import com.aix.parser.DefaultParser;
 import com.aix.parser.Parser;
 import com.aix.parser.TypeRef;
@@ -145,8 +146,11 @@ public class JsonPlus {
             Map<String, Expression> members = objectExpression.getMembers();
             for (Field declaredField : declaredFields) {
                 declaredField.setAccessible(true);
-                Expression expression = members.get(declaredField.getName());
-                if (expression == null || declaredField.getDeclaredAnnotation(IgnoreField.class) != null) continue;
+                if (declaredField.getDeclaredAnnotation(IgnoreField.class) != null) continue;
+                JsonField jsonField = declaredField.getDeclaredAnnotation(JsonField.class);
+                String name = jsonField != null ? jsonField.name() : declaredField.getName();
+                Expression expression = members.get(name);
+                if (expression == null) continue;
                 Type type = declaredField.getGenericType();
                 declaredField.set(instance, convertToType(expression, type));
             }
@@ -192,9 +196,11 @@ public class JsonPlus {
             for (Field declaredField : declaredFields) {
                 declaredField.setAccessible(true);
                 if(declaredField.getDeclaredAnnotation(IgnoreField.class) != null) continue;
+                JsonField jsonField = declaredField.getDeclaredAnnotation(JsonField.class);
+                String name = jsonField != null ? jsonField.name() : declaredField.getName();
                 try {
                     Expression value = toExpression(declaredField.get(obj));
-                    members.put(declaredField.getName(),value);
+                    members.put(name,value);
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
