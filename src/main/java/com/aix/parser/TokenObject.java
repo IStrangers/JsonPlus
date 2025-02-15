@@ -7,8 +7,8 @@ public class TokenObject {
         this.value = value;
     }
 
-    private Token token;
-    private String value;
+    private final Token token;
+    private final String value;
 
     public Token getToken() {
         return token;
