@@ -11,10 +11,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class JsonPlus {
@@ -166,7 +163,7 @@ public class JsonPlus {
             return NullExpression.CONST_NULL;
         } else if (obj instanceof Boolean objBool) {
             return objBool ? BoolExpression.CONST_TRUE : BoolExpression.CONST_FALSE;
-        } else if (obj instanceof List<?> objList) {
+        } else if (obj instanceof Collection<?> objList) {
             List<Expression> members = new ArrayList<>(objList.size());
             for (Object o : objList) {
                 members.add(toExpression(o));
