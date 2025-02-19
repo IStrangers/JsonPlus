@@ -2,6 +2,7 @@ package com.aix;
 
 import com.aix.annotation.IgnoreField;
 import com.aix.annotation.JsonField;
+import com.aix.handler.ValueConvertHandler;
 import com.aix.parser.DefaultParser;
 import com.aix.parser.Parser;
 import com.aix.parser.TypeRef;
@@ -35,7 +36,7 @@ public class JsonPlus {
         return expression.toJson();
     }
 
-    private static <T> T convertToType(Expression expression, Type type) {
+    public static <T> T convertToType(Expression expression, Type type) {
         if (type instanceof ParameterizedType pt) {
             return convertToRawType(expression,pt.getRawType(),pt.getActualTypeArguments());
         }
@@ -48,9 +49,10 @@ public class JsonPlus {
             boolean isObjectToListType = isObjectType && expression instanceof ArrayExpression;
             boolean isObjectToMapType = isObjectType && expression instanceof ObjectExpression;
             boolean isObjectToBaseType = isObjectType && !(isObjectToListType || isObjectToMapType);
+            boolean isMapToMapType = Map.class.isAssignableFrom(clazz) && expression instanceof ObjectExpression;
             if(isObjectToListType) {
                 return handleListConversion(expression, actualTypeArguments[0]);
-            } else if(isObjectToMapType) {
+            } else if(isObjectToMapType || isMapToMapType) {
                 return handleMapConversion(expression, actualTypeArguments[0]);
             }else if(
                 isObjectToBaseType ||
@@ -145,11 +147,12 @@ public class JsonPlus {
                 declaredField.setAccessible(true);
                 if (declaredField.getDeclaredAnnotation(IgnoreField.class) != null) continue;
                 JsonField jsonField = declaredField.getDeclaredAnnotation(JsonField.class);
-                String name = jsonField != null ? jsonField.name() : declaredField.getName();
+                String name = hasCustomFieldName(jsonField) ? jsonField.name() : declaredField.getName();
                 Expression expression = members.get(name);
                 if (expression == null) continue;
                 Type type = declaredField.getGenericType();
-                declaredField.set(instance, convertToType(expression, type));
+                Object value = hasValueConvertHandler(jsonField) ? jsonField.valueConvert().getDeclaredConstructor().newInstance().convert(expression,type) : convertToType(expression, type);
+                declaredField.set(instance, value);
             }
             return (T) instance;
         } catch (Exception e) {
@@ -194,7 +197,7 @@ public class JsonPlus {
                 declaredField.setAccessible(true);
                 if(declaredField.getDeclaredAnnotation(IgnoreField.class) != null) continue;
                 JsonField jsonField = declaredField.getDeclaredAnnotation(JsonField.class);
-                String name = jsonField != null ? jsonField.name() : declaredField.getName();
+                String name = hasCustomFieldName(jsonField) ? jsonField.name() : declaredField.getName();
                 try {
                     Expression value = toExpression(declaredField.get(obj));
                     members.put(name,value);
@@ -204,6 +207,14 @@ public class JsonPlus {
             }
             return new ObjectExpression(members);
         }
+    }
+
+    private static boolean hasCustomFieldName(JsonField jsonField) {
+        return jsonField != null && !jsonField.name().isEmpty();
+    }
+
+    private static boolean hasValueConvertHandler(JsonField jsonField) {
+        return jsonField != null && jsonField.valueConvert() != ValueConvertHandler.class;
     }
 
 }
