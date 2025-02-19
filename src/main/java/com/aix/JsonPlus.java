@@ -49,7 +49,7 @@ public class JsonPlus {
             boolean isObjectToListType = isObjectType && expression instanceof ArrayExpression;
             boolean isObjectToMapType = isObjectType && expression instanceof ObjectExpression;
             boolean isObjectToBaseType = isObjectType && !(isObjectToListType || isObjectToMapType);
-            boolean isMapToMapType = Map.class.isAssignableFrom(clazz) && expression instanceof ObjectExpression;
+            boolean isMapToMapType = expression instanceof ObjectExpression && !clazz.isAssignableFrom(Map.class) && Map.class.isAssignableFrom(clazz);
             if(isObjectToListType) {
                 return handleListConversion(expression, actualTypeArguments[0]);
             } else if(isObjectToMapType || isMapToMapType) {
